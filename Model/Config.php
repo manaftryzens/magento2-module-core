@@ -368,7 +368,10 @@ class Config
      */
     public function isEnabled($scopeId = null, string $scope = ScopeInterface::SCOPE_STORE): bool
     {
-        return (bool)$this->getConfig('yotpo_active', $scopeId, $scope);
+        $isYotpoEnabled = (bool)$this->getConfig('yotpo_active', $scopeId, $scope);
+        $appKeyAvailable = trim($this->getConfig('app_key', $scopeId, $scope));
+        $secKeyAvailable = trim($this->getConfig('secret', $scopeId, $scope));
+        return $isYotpoEnabled && $appKeyAvailable && $secKeyAvailable;
     }
 
     /**
