@@ -152,7 +152,24 @@ class Processor extends Main
                 $this->runStoreIds[] = $storeId;
                 $this->emulateFrontendArea($storeId);
                 try {
+                    $disabled = false;
+                    if (!$this->coreConfig->isEnabled()) {
+                        $disabled = true;
+                        $this->yotpoCatalogLogger->info(
+                            __(
+                                'Product Sync - Yotpo is Disabled - Magento Store ID: %1, Name: %2',
+                                $storeId,
+                                $this->coreConfig->getStoreName($storeId)
+                            )
+                        );
+                        if ($this->isCommandLineSync) {
+                            // phpcs:ignore
+                            echo 'Yotpo is disabled for store - ' .
+                                $this->coreConfig->getStoreName($storeId) . PHP_EOL;
+                        }
+                    }
                     if (!$order && !$this->coreConfig->isCatalogSyncActive()) {
+                        $disabled = true;
                         $this->yotpoCatalogLogger->info(
                             __(
                                 'Product Sync - Disabled - Magento Store ID: %1, Name: %2',
@@ -165,6 +182,8 @@ class Processor extends Main
                             echo 'Catalog sync is disabled for store - ' .
                                 $this->coreConfig->getStoreName($storeId) . PHP_EOL;
                         }
+                    }
+                    if ($disabled) {
                         $this->stopEnvironmentEmulation();
                         continue;
                     }
