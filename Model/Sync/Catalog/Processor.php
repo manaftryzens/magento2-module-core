@@ -138,7 +138,11 @@ class Processor extends Main
     {
         $this->runStoreIds = [];
         try {
-            $allStores = array_unique($storeIds) ?: (array)$this->coreConfig->getAllStoreIds(false);
+            if ($order) {
+                $allStores = [$order->getStoreId()];
+            } else {
+                $allStores = array_unique($storeIds) ?: (array)$this->coreConfig->getAllStoreIds(false);
+            }
             $unSyncedStoreIds = [];
             foreach ($allStores as $storeId) {
                 if ($this->isCommandLineSync) {
