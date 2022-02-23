@@ -283,7 +283,7 @@ class Processor extends Main
 
                 $lastSyncTime = $this->getCurrentTime();
                 $yotpoIdKey = $visibleVariants ? 'visible_variant_yotpo_id' : 'yotpo_id';
-                $tempSqlArray = [
+                $tempSqlMap = [
                     'product_id' => $itemId,
                     $yotpoIdKey => $apiParam['yotpo_id'] ?: 0,
                     'store_id' => $storeId,
@@ -292,9 +292,9 @@ class Processor extends Main
                     'sync_status' => 1
                 ];
                 if (!$visibleVariants) {
-                    $tempSqlArray['yotpo_id_parent'] = $apiParam['yotpo_id_parent'] ?: 0;
+                    $tempSqlMap['yotpo_id_parent'] = $apiParam['yotpo_id_parent'] ?: 0;
                 }
-                if ($this->coreConfig->canUpdateCustomAttributeForProducts($tempSqlArray['response_code'])) {
+                if ($this->coreConfig->canUpdateCustomAttributeForProducts($tempSqlMap['response_code'])) {
                     $tempSqlDataIntTable = [
                         'attribute_id' => $attributeId,
                         'store_id' => $storeId,
@@ -314,13 +314,13 @@ class Processor extends Main
                 $returnResponse = $this->processResponse(
                     $apiParam,
                     $response,
-                    $tempSqlArray,
+                    $tempSqlMap,
                     $itemData,
                     $externalIds,
                     $visibleVariants
                 );
 
-                $tempSqlArray = $returnResponse['temp_sql'];
+                $tempSqlMap = $returnResponse['temp_sql'];
                 $externalIds = $returnResponse['external_id'];
 
                 if (isset($this->retryItems[$storeId][$itemId])) {
@@ -339,16 +339,16 @@ class Processor extends Main
                 //push to parentData array if parent product is
                 // being the part of current collection
                 if (!$visibleVariants) {
-                    $parentData = $this->pushParentData((int)$itemId, $tempSqlArray, $parentData, $parentIds);
+                    $parentData = $this->pushParentData((int)$itemId, $tempSqlMap, $parentData, $parentIds);
                 }
-                if ($tempSqlArray) {
+                if ($tempSqlMap) {
                     $syncDataSql = [];
-                    $syncDataSql[] = $tempSqlArray;
+                    $syncDataSql[] = $tempSqlMap;
                     $this->insertOnDuplicate(
                         'yotpo_product_sync',
                         $syncDataSql
                     );
-                    $sqlData[] = $tempSqlArray;
+                    $sqlData[] = $tempSqlMap;
                 }
                 if ($this->isCommandLineSync && !$this->isImmediateRetry) {
                     // phpcs:ignore
@@ -538,20 +538,20 @@ class Processor extends Main
     /**
      * Push Yotpo Id to Parent data
      * @param int $productId
-     * @param array<string, int|string> $tempSqlArray
+     * @param array<string, int|string> $tempSqlMap
      * @param array<int|string, mixed> $parentData
      * @param array<int, int> $parentIds
      * @return array<int|string, mixed>
      */
-    protected function pushParentData($productId, $tempSqlArray, $parentData, $parentIds)
+    protected function pushParentData($productId, $tempSqlMap, $parentData, $parentIds)
     {
         $yotpoId = 0;
-        if (isset($tempSqlArray['yotpo_id'])
-            && $tempSqlArray['yotpo_id']) {
+        if (isset($tempSqlMap['yotpo_id'])
+            && $tempSqlMap['yotpo_id']) {
             if (!isset($parentData[$productId])) {
                 $parentId = $this->findParentId($productId, $parentIds);
                 if ($parentId) {
-                    $yotpoId = $tempSqlArray['yotpo_id'];
+                    $yotpoId = $tempSqlMap['yotpo_id'];
                 }
             }
         }

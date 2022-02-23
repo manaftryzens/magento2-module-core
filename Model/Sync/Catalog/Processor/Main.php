@@ -142,7 +142,7 @@ class Main extends AbstractJobs
      * Handle response
      * @param array<mixed> $apiParam
      * @param mixed $response
-     * @param array<string, string|int> $tempSqlArray
+     * @param array<string, string|int> $tempSqlMap
      * @param mixed $data
      * @param array<int, int> $externalIds
      * @param boolean $visibleVariants
@@ -152,7 +152,7 @@ class Main extends AbstractJobs
     protected function processResponse(
         $apiParam,
         $response,
-        $tempSqlArray,
+        $tempSqlMap,
         $data,
         $externalIds = [],
         $visibleVariants = false
@@ -164,13 +164,13 @@ class Main extends AbstractJobs
             case $this->coreConfig->getProductSyncMethod('createProductVariant'):
                 $yotpoIdkey = $visibleVariants ? 'visible_variant_yotpo_id' : 'yotpo_id';
                 if ($response->getData('is_success')) {
-                    $tempSqlArray[$yotpoIdkey] = $this->getYotpoIdFromResponse($response, $apiParam['method']);
+                    $tempSqlMap[$yotpoIdkey] = $this->getYotpoIdFromResponse($response, $apiParam['method']);
                     $this->writeSuccessLog($apiParam['method'], $storeId);
                 } else {
                     if ($response->getStatus() == '409') {
                         $externalIds[] = array_key_exists('external_id', $data) ? $data['external_id'] : 0;
                     }
-                    $tempSqlArray[$yotpoIdkey] = 0;
+                    $tempSqlMap[$yotpoIdkey] = 0;
                     $this->writeFailedLog($apiParam['method'], $storeId);
                 }
                 break;
@@ -184,7 +184,7 @@ class Main extends AbstractJobs
                     $this->writeSuccessLog($apiParam['method'], $storeId);
                     $delOrUnAssignParams = $this->prepareTempSqlForUnAssignOrDel($apiParam['method']);
                     if ($delOrUnAssignParams) {
-                        $tempSqlArray = array_merge($tempSqlArray, $delOrUnAssignParams);
+                        $tempSqlMap = array_merge($tempSqlMap, $delOrUnAssignParams);
                     }
                 } else {
                     if ($this->isImmediateRetryResponse($response->getData('status'))) {
@@ -203,7 +203,7 @@ class Main extends AbstractJobs
                 }
                 break;
             default:
-                $tempSqlArray = [];
+                $tempSqlMap = [];
                 $storeId = $this->coreConfig->getStoreId();
                 $this->yotpoCatalogLogger->info(
                     __(
@@ -217,7 +217,7 @@ class Main extends AbstractJobs
         }
 
         return [
-            'temp_sql' => $tempSqlArray,
+            'temp_sql' => $tempSqlMap,
             'external_id' => array_filter($externalIds),
             'four_not_four_data' => $fourNotFourData
         ];
