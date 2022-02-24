@@ -9,6 +9,7 @@ use Yotpo\Core\Model\AbstractJobs;
 class Main
 {
     const DELETE_LIMIT = 10000;
+    const UPDATE_LIMIT = 2000;
 
     /**
      * @var int
